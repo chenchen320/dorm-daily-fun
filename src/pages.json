@@ -31,6 +31,22 @@
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black"
       }
+    },
+    {
+      "path": "pages/fortune-wheel/index",
+      "style": {
+        "navigationBarTitleText": "寝室命运之轮",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/recap/index",
+      "style": {
+        "navigationBarTitleText": "沙雕黑料小报",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
     }
   ],
   "globalStyle": {
