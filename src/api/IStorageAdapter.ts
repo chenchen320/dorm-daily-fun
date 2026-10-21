@@ -1,4 +1,4 @@
-import type { Room, Member } from '../types';
+import type { Room, Member, Post } from '../types';
 
 export interface IStorageAdapter {
   // 寝室操作
@@ -12,6 +12,11 @@ export interface IStorageAdapter {
   getMemberByOpenId(openid: string): Promise<Member | null>;
   addMember(member: Member): Promise<Member>;
   removeMember(dormId: string, memberId: string): Promise<boolean>;
+
+  // 沙雕日常帖子操作
+  getPosts(dormId: string, filterTag?: string): Promise<Post[]>;
+  createPost(post: Post): Promise<Post>;
+  deletePost(dormId: string, postId: string): Promise<boolean>;
 
   // 本地活跃会话
   getActiveSession(): { openid: string; dormId: string } | null;

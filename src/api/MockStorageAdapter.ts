@@ -1,5 +1,5 @@
 import type { IStorageAdapter } from './IStorageAdapter';
-import type { Room, Member } from '../types';
+import type { Room, Member, Post } from '../types';
 
 // 跨环境存储桥接 (Uni-app runtime 或 Node/Vitest runtime)
 const getStorage = (key: string): string | null => {
@@ -38,6 +38,7 @@ const memoryStorage = new Map<string, string>();
 const STORAGE_KEYS = {
   ROOMS: 'dorm_mock_rooms_v1',
   MEMBERS: 'dorm_mock_members_v1',
+  POSTS: 'dorm_mock_posts_v1',
   SESSION: 'dorm_mock_session_v1',
 };
 
@@ -52,6 +53,44 @@ const DEFAULT_ROOM: Room = {
   createdAt: 1729500000000,
 };
 
+// 默认内置的 4#304 趣味开荒日常数据
+const DEFAULT_POSTS: Post[] = [
+  {
+    id: 'post_seed_1',
+    dormId: 'dorm_4_304',
+    authorId: 'mem_seed_1',
+    authorName: '寝室长',
+    authorAvatar: '/static/logo.png',
+    isAnonymous: false,
+    targetGuyRoles: ['王晨'],
+    content: '老王昨天半夜突然从床上笔直坐起来大喊：“这道题必须选C，不选C我倒立洗头！”，喊完倒头秒打呼噜，全寝室直接笑醒！',
+    images: [],
+    funnyLevel: 5,
+    tag: '梦话暴论',
+    reactions: { '🤣': 5, '🤯': 3, '📁': 2 },
+    reactedUsers: {},
+    commentCount: 2,
+    createdAt: Date.now() - 1000 * 60 * 60 * 3, // 3小时前
+  },
+  {
+    id: 'post_seed_2',
+    dormId: 'dorm_4_304',
+    authorId: 'mem_seed_2',
+    authorName: '小肥肥',
+    authorAvatar: '/static/logo.png',
+    isAnonymous: false,
+    targetGuyRoles: ['皇上'],
+    content: '皇上白天发誓今晚要健康生活、戒断夜宵。结果半夜11点半外卖员敲门，一份炸鸡豪华桶配超大杯全糖奶茶赫然在案！',
+    images: [],
+    funnyLevel: 4,
+    tag: '宿舍搞笑日常',
+    reactions: { '🤣': 6, '📁': 4, '🚪': 1 },
+    reactedUsers: {},
+    commentCount: 1,
+    createdAt: Date.now() - 1000 * 60 * 60 * 20, // 20小时前
+  },
+];
+
 export class MockStorageAdapter implements IStorageAdapter {
   constructor() {
     this.seedInitialData();
@@ -62,6 +101,11 @@ export class MockStorageAdapter implements IStorageAdapter {
     if (!existingRooms.some((r) => r.roomCode === DEFAULT_ROOM.roomCode)) {
       existingRooms.push(DEFAULT_ROOM);
       this.writeRooms(existingRooms);
+    }
+
+    const existingPosts = this.readPosts();
+    if (existingPosts.length === 0) {
+      this.writePosts(DEFAULT_POSTS);
     }
   }
 
@@ -91,6 +135,20 @@ export class MockStorageAdapter implements IStorageAdapter {
 
   private writeMembers(members: Member[]): void {
     setStorage(STORAGE_KEYS.MEMBERS, JSON.stringify(members));
+  }
+
+  private readPosts(): Post[] {
+    const raw = getStorage(STORAGE_KEYS.POSTS);
+    if (!raw) return [];
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+
+  private writePosts(posts: Post[]): void {
+    setStorage(STORAGE_KEYS.POSTS, JSON.stringify(posts));
   }
 
   async getRoom(dormId: string): Promise<Room | null> {
@@ -148,6 +206,32 @@ export class MockStorageAdapter implements IStorageAdapter {
     return true;
   }
 
+  // 获取搞笑日常 (多租户隔离 + 分类标签筛选 + 按时间倒序)
+  async getPosts(dormId: string, filterTag?: string): Promise<Post[]> {
+    const allPosts = this.readPosts();
+    let dormPosts = allPosts.filter((p) => p.dormId === dormId);
+
+    if (filterTag && filterTag !== '全部') {
+      dormPosts = dormPosts.filter((p) => p.tag === filterTag);
+    }
+
+    return dormPosts.sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async createPost(post: Post): Promise<Post> {
+    const posts = this.readPosts();
+    posts.unshift(post);
+    this.writePosts(posts);
+    return post;
+  }
+
+  async deletePost(dormId: string, postId: string): Promise<boolean> {
+    const posts = this.readPosts();
+    const filtered = posts.filter((p) => !(p.dormId === dormId && p.id === postId));
+    this.writePosts(filtered);
+    return true;
+  }
+
   getActiveSession(): { openid: string; dormId: string } | null {
     const raw = getStorage(STORAGE_KEYS.SESSION);
     if (!raw) return null;
@@ -166,11 +250,11 @@ export class MockStorageAdapter implements IStorageAdapter {
     }
   }
 
-  // 辅助重置测试数据
   clearAll(): void {
     memoryStorage.clear();
     setStorage(STORAGE_KEYS.ROOMS, '');
     setStorage(STORAGE_KEYS.MEMBERS, '');
+    setStorage(STORAGE_KEYS.POSTS, '');
     setStorage(STORAGE_KEYS.SESSION, '');
     this.seedInitialData();
   }
