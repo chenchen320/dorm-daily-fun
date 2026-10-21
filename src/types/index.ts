@@ -57,3 +57,26 @@ export interface Post {
   commentCount: number;    // 评论数量
   createdAt: number;       // 记录时间戳
 }
+
+export interface Comment {
+  id: string;
+  postId: string;          // 所属事件 ID
+  dormId: string;          // 寝室隔离 ID
+  authorId: string;
+  authorName: string;      // 匿名模式下为 "神秘室友"
+  authorAvatar: string;
+  isAnonymous: boolean;
+  content: string;         // 评论内容 (支持原生 Emoji)
+  createdAt: number;
+}
+
+export interface SlangQuote {
+  id: string;
+  dormId: string;
+  content: string;         // 金句/黑话内容
+  speakerRole: string;     // 说话人/当事人
+  explanation?: string;    // 出处典故/释义
+  originPostId?: string;   // 关联的原始事件 ID
+  likesCount: number;      // 崇拜/点赞数
+  createdAt: number;
+}

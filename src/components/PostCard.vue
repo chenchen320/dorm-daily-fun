@@ -48,29 +48,35 @@
       />
     </view>
 
-    <!-- 底部互动与状态栏 -->
-    <view class="card-footer">
-      <view class="reactions-summary">
-        <text v-if="post.reactions['🤣']" class="reaction-tag">🤣 {{ post.reactions['🤣'] }}</text>
-        <text v-if="post.reactions['🤯']" class="reaction-tag">🤯 {{ post.reactions['🤯'] }}</text>
-        <text v-if="post.reactions['📁']" class="reaction-tag">📁 {{ post.reactions['📁'] }}</text>
-        <text v-if="post.reactions['🚪']" class="reaction-tag">🚪 {{ post.reactions['🚪'] }}</text>
-      </view>
+    <!-- 表态选择器组件 -->
+    <ReactionPicker :post="post" />
 
-      <view class="meta-right">
-        <text class="comment-count">💬 {{ post.commentCount }} 吐槽</text>
-      </view>
+    <!-- 底部互动与神评唤起 -->
+    <view class="card-footer" @click="showCommentModal = true">
+      <text class="comment-trigger">💬 查看室友神评 ({{ post.commentCount }})</text>
+      <text class="reply-hint">我也来吐槽一句 ➔</text>
     </view>
+
+    <!-- 评论抽屉弹窗 -->
+    <CommentModal
+      v-model:visible="showCommentModal"
+      :post-id="post.id"
+      :is-parent-post-anonymous="post.isAnonymous"
+    />
   </view>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import type { Post } from '../types';
+import ReactionPicker from './ReactionPicker.vue';
+import CommentModal from './CommentModal.vue';
 
 const props = defineProps<{
   post: Post;
 }>();
+
+const showCommentModal = ref(false);
 
 const gridSize = computed(() => {
   const count = props.post.images ? props.post.images.length : 0;
@@ -227,7 +233,7 @@ function previewImg(currentIdx: number) {
 .image-gallery {
   display: grid;
   gap: 12rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
 
   &.grid-1 {
     grid-template-columns: 1fr;
@@ -261,28 +267,19 @@ function previewImg(currentIdx: number) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1rpx solid #f1f2f6;
+  border-top: 1rpx dashed #f1f2f6;
   padding-top: 16rpx;
+  margin-top: 16rpx;
 
-  .reactions-summary {
-    display: flex;
-    gap: 12rpx;
-
-    .reaction-tag {
-      background: #f8f9fa;
-      border: 1rpx solid #e9ecef;
-      border-radius: 16rpx;
-      padding: 4rpx 14rpx;
-      font-size: 22rpx;
-      color: #636e72;
-    }
+  .comment-trigger {
+    font-size: 24rpx;
+    font-weight: 600;
+    color: #0984e3;
   }
 
-  .meta-right {
-    .comment-count {
-      font-size: 22rpx;
-      color: #95a5a6;
-    }
+  .reply-hint {
+    font-size: 22rpx;
+    color: #b2bec3;
   }
 }
 </style>

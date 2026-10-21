@@ -5,17 +5,38 @@
       <view class="header-main">
         <view class="dorm-title-row">
           <text class="dorm-name">{{ currentRoomCode }} 沙雕大本营</text>
-          <text class="gate-link" @click="goToGate">🚪 身份/门禁</text>
+          <text class="gate-link" @click="goToGate">🚪 门禁</text>
         </view>
         <view class="user-pill" v-if="roomStore.currentMember">
-          <text class="role-tag">我的身份：【{{ roomStore.currentMember.roleName }}】</text>
+          <text class="role-tag">【{{ roomStore.currentMember.roleName }}】</text>
         </view>
       </view>
 
-      <!-- 搞笑公告栏 -->
-      <view class="notice-bar">
-        <text class="notice-icon">📢</text>
-        <text class="notice-text">{{ currentNotice }}</text>
+      <!-- 快捷入口卡片组 -->
+      <view class="quick-navs">
+        <view class="nav-chip" @click="goToSlang">
+          <text class="chip-icon">📜</text>
+          <text class="chip-text">黑话词典</text>
+        </view>
+        <view class="nav-chip" @click="goToWheel">
+          <text class="chip-icon">🎡</text>
+          <text class="chip-text">命运转盘</text>
+        </view>
+        <view class="nav-chip" @click="goToRecap">
+          <text class="chip-icon">🗞️</text>
+          <text class="chip-text">黑料小报</text>
+        </view>
+      </view>
+
+      <!-- 今日金句墙轮播 Banner -->
+      <view v-if="slangStore.topQuote" class="quote-banner" @click="goToSlang">
+        <text class="quote-icon">💬</text>
+        <view class="quote-content">
+          <text class="quote-title">今日寝室金句：</text>
+          <text class="quote-body">“{{ slangStore.topQuote.content }}”</text>
+          <text class="quote-by">—— {{ slangStore.topQuote.speakerRole }}</text>
+        </view>
+        <text class="quote-arrow">➔</text>
       </view>
     </view>
 
@@ -69,21 +90,17 @@ import { computed, onMounted } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { useRoomStore } from '../../stores/room';
 import { usePostStore, POST_TAGS } from '../../stores/post';
+import { useSlangStore } from '../../stores/slang';
 import PostCard from '../../components/PostCard.vue';
 
 const roomStore = useRoomStore();
 const postStore = usePostStore();
+const slangStore = useSlangStore();
 
 const allFilterTags = POST_TAGS;
 
 const currentRoomCode = computed(() => {
   return roomStore.currentRoom ? roomStore.currentRoom.roomCode : '4#304';
-});
-
-const currentNotice = computed(() => {
-  return roomStore.currentRoom
-    ? roomStore.currentRoom.notice
-    : '4#304沙雕大本营：严禁熄灯后大喊大叫，除非有人选了C！';
 });
 
 const currentDormId = computed(() => {
@@ -93,10 +110,12 @@ const currentDormId = computed(() => {
 onMounted(async () => {
   await roomStore.initSession();
   await postStore.loadPosts(currentDormId.value);
+  await slangStore.loadQuotes(currentDormId.value);
 });
 
 onShow(async () => {
   await postStore.loadPosts(currentDormId.value);
+  await slangStore.loadQuotes(currentDormId.value);
 });
 
 function handleSelectTag(tag: string) {
@@ -109,6 +128,18 @@ function goToGate() {
 
 function goToEditor() {
   uni.navigateTo({ url: '/pages/post-editor/index' });
+}
+
+function goToSlang() {
+  uni.navigateTo({ url: '/pages/slang-dict/index' });
+}
+
+function goToWheel() {
+  uni.navigateTo({ url: '/pages/fortune-wheel/index' });
+}
+
+function goToRecap() {
+  uni.navigateTo({ url: '/pages/recap/index' });
 }
 </script>
 
@@ -128,7 +159,7 @@ function goToEditor() {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16rpx;
+    margin-bottom: 20rpx;
 
     .dorm-title-row {
       display: flex;
@@ -162,23 +193,76 @@ function goToEditor() {
     }
   }
 
-  .notice-bar {
+  .quick-navs {
+    display: flex;
+    gap: 16rpx;
+    margin-bottom: 20rpx;
+
+    .nav-chip {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8rpx;
+      background: #f8f9fa;
+      border: 1rpx solid #e9ecef;
+      padding: 12rpx 0;
+      border-radius: 18rpx;
+
+      .chip-icon {
+        font-size: 26rpx;
+      }
+      .chip-text {
+        font-size: 22rpx;
+        font-weight: 600;
+        color: #2d3436;
+      }
+    }
+  }
+
+  .quote-banner {
     display: flex;
     align-items: center;
-    gap: 12rpx;
-    background: #fff8e1;
+    gap: 16rpx;
+    background: #fff9e6;
+    border-left: 8rpx solid #f39c12;
     border-radius: 14rpx;
-    padding: 12rpx 20rpx;
+    padding: 16rpx 20rpx;
 
-    .notice-icon {
-      font-size: 26rpx;
+    .quote-icon {
+      font-size: 32rpx;
     }
-    .notice-text {
-      font-size: 24rpx;
-      color: #b78103;
+
+    .quote-content {
+      flex: 1;
       overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
+
+      .quote-title {
+        font-size: 20rpx;
+        color: #e67e22;
+        font-weight: bold;
+        display: block;
+      }
+
+      .quote-body {
+        font-size: 24rpx;
+        color: #2d3436;
+        font-weight: bold;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        display: block;
+      }
+
+      .quote-by {
+        font-size: 20rpx;
+        color: #7f8c8d;
+      }
+    }
+
+    .quote-arrow {
+      font-size: 24rpx;
+      color: #b2bec3;
     }
   }
 }
