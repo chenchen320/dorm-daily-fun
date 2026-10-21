@@ -82,7 +82,6 @@ export const useRoomStore = defineStore('room', () => {
           if (me) {
             currentMember.value = me;
           } else {
-            // 被移除或身份失效
             storageAdapter.setActiveSession(null);
             currentRoom.value = null;
             currentMember.value = null;
@@ -212,6 +211,32 @@ export const useRoomStore = defineStore('room', () => {
     return true;
   }
 
+  // 管理员能力：更新寝室公告
+  async function updateNotice(newNotice: string) {
+    if (!currentRoom.value) throw new Error('寝室不存在');
+    if (!isOwner.value) throw new Error('只有寝室长可以修改寝室公告');
+    if (!newNotice.trim()) throw new Error('公告内容不能为空');
+
+    const updated = await storageAdapter.updateRoom(currentRoom.value.id, {
+      notice: newNotice.trim(),
+    });
+    currentRoom.value = updated;
+    return updated;
+  }
+
+  // 管理员能力：重置进房密码
+  async function updateSecretPIN(newPIN: string) {
+    if (!currentRoom.value) throw new Error('寝室不存在');
+    if (!isOwner.value) throw new Error('只有寝室长可以重置进房密钥');
+    if (newPIN.trim().length < 4) throw new Error('密钥长度不能少于4位');
+
+    const updated = await storageAdapter.updateRoom(currentRoom.value.id, {
+      secretPIN: newPIN.trim(),
+    });
+    currentRoom.value = updated;
+    return updated;
+  }
+
   // 退出寝室
   function leaveRoom() {
     storageAdapter.setActiveSession(null);
@@ -236,6 +261,8 @@ export const useRoomStore = defineStore('room', () => {
     claimRole,
     updateCapacity,
     kickMember,
+    updateNotice,
+    updateSecretPIN,
     leaveRoom,
   };
 });

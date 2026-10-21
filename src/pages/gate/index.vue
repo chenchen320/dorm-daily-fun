@@ -31,6 +31,7 @@
 
       <view class="action-buttons">
         <button class="primary-btn" @click="enterDormFeed">立即进入寝室大本营 🚀</button>
+        <button v-if="roomStore.isOwner" class="admin-entry-btn" @click="goToAdmin">⚙️ 进入寝室长管理控制台</button>
         <button class="outline-btn" @click="roomStore.leaveRoom">切换身份 / 退出</button>
       </view>
     </view>
@@ -200,6 +201,10 @@ function enterDormFeed() {
       uni.navigateTo({ url: '/pages/index/index' });
     },
   });
+}
+
+function goToAdmin() {
+  uni.navigateTo({ url: '/pages/admin/index' });
 }
 </script>
 
@@ -424,6 +429,15 @@ function enterDormFeed() {
     display: flex;
     flex-direction: column;
     gap: 20rpx;
+
+    .admin-entry-btn {
+      background: #ffeaa7;
+      border: 2rpx solid #fdcb6e;
+      color: #d35400;
+      border-radius: 50rpx;
+      font-size: 28rpx;
+      font-weight: bold;
+    }
 
     .outline-btn {
       background: transparent;
